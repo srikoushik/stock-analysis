@@ -6,3 +6,6 @@ Create a virtual environment ```python3 -m venv ./env``` ```. ./env/bin/activate
 Install the requirements ```pip install -r requirements.txt```
 
 Run the script ```python3 main.py ./StockData.csv```
+
+![Stock Analysis Demo](https://media.giphy.com/media/dBm0tVZQYj3mBlVQSo/giphy.gif)
+
