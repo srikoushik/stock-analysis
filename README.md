@@ -1,5 +1,5 @@
 # stock-analysis
-A pthon3 command line tool which will analyse the entered stock name and return the mean, standard deviation, best buy date, best sell date and the profit.
+A python3 command line tool which will analyse the entered stock name and return the mean, standard deviation, best buy date, best sell date and the profit.
 
 Step 1: Create a virtual environment ```python3 -m venv ./env``` 
 
