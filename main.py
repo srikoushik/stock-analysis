@@ -16,7 +16,7 @@ csvData = CSVData()
 
 def main():
     # Check CSV arguement is present
-    if len(sys.argv) > 1 and sys.argv[1]:
+    if len(sys.argv) > 1 and sys.argv[1].endswith(".csv"):
         inputs.filePath = sys.argv[1]
 
         # process CSV and save as data class
@@ -27,11 +27,32 @@ def main():
         print("Error: Load the CSV file.")
 
 
+def user_input(text):
+    try:
+        return input(text)
+    except KeyboardInterrupt:
+        exit(0)
+
+
 def continueInputAfterName():
+    availableStartAndEndDate()
     getTheStartDate()
     getTheEndDate()
     calculateResult()
     doYouWantToContinue()
+
+
+def availableStartAndEndDate():
+    dataForEnteredStockName = csvData.getNameKeyAsData().get(inputs.stockName)
+
+    sortedFilteredDates = sorted(
+        dataForEnteredStockName["dates"])
+
+    startDate = sortedFilteredDates[0].strftime("%d-%b-%Y")
+    lastDate = sortedFilteredDates[-1].strftime("%d-%b-%Y")
+
+    print(
+        f"Info: Data for {inputs.stockName.upper()} available between: {startDate} and {lastDate}")
 
 
 def validateDate(enteredDate):
@@ -46,7 +67,7 @@ def validateDate(enteredDate):
 
 
 def getTheStockName():
-    inputs.stockName = input(
+    inputs.stockName = user_input(
         "\nWelcome ! Enter the stock you need to analyse: ").lower()
 
     if inputs.stockName.isalpha():
@@ -58,8 +79,8 @@ def getTheStockName():
             nearestMatch = process.extract(
                 inputs.stockName, csvData.getStockNamesArray())
             if nearestMatch and nearestMatch[0]:
-                userInput = input("Oops! Do you mean %s? (y or n): " %
-                                  (nearestMatch[0][0])).lower()
+                userInput = user_input("Oops! Do you mean %s? (y or n): " %
+                                       (nearestMatch[0][0])).lower()
                 if userInput == "y" or userInput == "yes":
                     inputs.stockName = nearestMatch[0][0]
                     continueInputAfterName()
@@ -74,7 +95,7 @@ def getTheStockName():
 
 
 def doYouWantToContinue():
-    userInput = input(
+    userInput = user_input(
         "\nDo you want to analyse another stock? (y or n): ").lower()
     if userInput == "y" or userInput == "yes":
         inputs.resetInputData()
@@ -84,7 +105,7 @@ def doYouWantToContinue():
 
 
 def getTheStartDate():
-    error, result = validateDate(input("\nEnter the Start Date: "))
+    error, result = validateDate(user_input("\nEnter the Start Date: "))
     if not error:
         inputs.startDate = result
     else:
@@ -94,7 +115,7 @@ def getTheStartDate():
 
 def getTheEndDate():
     error, result = validateDate(
-        input("\nTill which date you want to analyse: "))
+        user_input("\nTill which date you want to analyse: "))
     if not error:
         if result > inputs.startDate:
             inputs.endDate = result
@@ -120,8 +141,10 @@ def calculateResult():
     if sortedDifference and sortedDifference[0]:
         topResult = sortedDifference[0]
         if topResult["difference"] > 0:
-            print("\nBest Buy Date: ", topResult["buyDate"])
-            print("\nBest Sell Date: ", topResult["sellDate"])
+            buyDate = topResult.get("buyDate")
+            sellDate = topResult.get("sellDate")
+            print("\nBest Buy Date: ", buyDate.strftime("%d-%b-%Y"))
+            print("\nBest Sell Date: ", sellDate.strftime("%d-%b-%Y"))
             print("\nProfit for 100 uints: ", topResult["difference"] * 100)
         else:
             print("\nMessage: No Profit for the stock in the selected date range.")
@@ -228,19 +251,36 @@ def getBestBuyAndSellDate(combinationOfData):
 
     for item in combinationOfData:
         differenceValue = 0
+        firstObject = item[0]
+        secondObject = item[1]
 
-        if item[0]["price"] < item[1]["price"]:
-            differenceValue = abs(
-                float(item[0]["price"]) - float(item[1]["price"]))
+        # Before comparing make sure whether the firstObject date > secondObject date
+        if firstObject["date"] < secondObject["date"]:
+            if firstObject["price"] < secondObject["price"]:
+                differenceValue = abs(
+                    float(firstObject["price"]) - float(secondObject["price"]))
+            else:
+                differenceValue = - \
+                    abs(float(firstObject["price"]) -
+                        float(secondObject["price"]))
+            record = dict({
+                "difference": differenceValue,
+                "buyDate": firstObject["date"],
+                "sellDate": secondObject["date"]
+            })
         else:
-            differenceValue = - \
-                abs(float(item[0]["price"]) - float(item[1]["price"]))
-
-        record = dict({
-            "difference": differenceValue,
-            "buyDate": item[0]["date"],
-            "sellDate": item[1]["date"]
-        })
+            if secondObject["price"] < firstObject["price"]:
+                differenceValue = abs(
+                    float(secondObject["price"]) - float(firstObject["price"]))
+            else:
+                differenceValue = - \
+                    abs(float(secondObject["price"]) -
+                        float(firstObject["price"]))
+            record = dict({
+                "difference": differenceValue,
+                "buyDate": secondObject["date"],
+                "sellDate": firstObject["date"]
+            })
         combinationOfDataAfterPriceDifference.append(record)
 
     return combinationOfDataAfterPriceDifference
